@@ -18,7 +18,9 @@ public class TraceParser {
 	Pattern ptConCreStmtId = Pattern.compile("prepareStatement \\(\\) returned PreparedStatement@([a-z0-9]+)");
 	Pattern ptStatement = Pattern.compile("\\[PreparedStatement@([a-z0-9]+)\\]");
 	Pattern ptStmtExecQCall = Pattern.compile("executeQuery \\(\\) called");
+	Pattern ptStmtExecUCall = Pattern.compile("executeUpdate \\(\\) called");
 	Pattern ptStmtExecQRet = Pattern.compile("executeQuery \\(\\) returned ResultSet@([a-z0-9]+)");
+	Pattern ptStmtExecURet = Pattern.compile("executeUpdate \\(\\) returned");
 	Pattern ptResultSet = Pattern.compile("\\[ResultSet@([a-z0-9]+)\\]");
 	Pattern ptClosed = Pattern.compile("close \\(\\) called");
 	Pattern ptFinalized = Pattern.compile("finalize \\(\\) called");
@@ -30,7 +32,9 @@ public class TraceParser {
 	Matcher mtConCreStmtId = null;
 	Matcher mtStatement = null;
 	Matcher mtStmtExecQCall = null;
+	Matcher mtStmtExecUCall = null;
 	Matcher mtStmtExecQRet = null;
+	Matcher mtStmtExecURet = null;
 	Matcher mtResultSet = null;
 	Matcher mtClosed = null;
 	Matcher mtFinalized = null;
@@ -47,6 +51,7 @@ public class TraceParser {
 		TraceParser tp = new TraceParser();
 		tp.parse(reader);
 		tp.print();
+		Analytics.process(tp.statements, tp.resultSets);
 	}
 	public void print()
 	{
@@ -113,9 +118,11 @@ public class TraceParser {
 						//System.out.println("prepareStatement found id = "+statementId);
 						mtStmtExecQCall = ptStmtExecQCall.matcher(line);
 						mtStmtExecQRet = ptStmtExecQRet.matcher(line);
+						mtStmtExecUCall = ptStmtExecUCall.matcher(line);
+						mtStmtExecURet = ptStmtExecURet.matcher(line);
 						mtClosed = ptClosed.matcher(line);
 						mtFinalized = ptFinalized.matcher(line);
-						if (mtStmtExecQCall.find())
+						if (mtStmtExecQCall.find() || mtStmtExecUCall.find())
 						{
 							execQueryTime = time;
 							//System.out.println("executeQuery called = "+execQueryTime);
@@ -127,6 +134,14 @@ public class TraceParser {
 							statements.get(statementId).addResultSetId(resultSetId);
 							ResultSet rs = new ResultSet(execQueryTime, time);
 							resultSets.put(resultSetId, rs);
+							if ( ( time - execQueryTime ) > 0 )	statements.get(statementId).inExecTime+= (time - execQueryTime);
+							statements.get(statementId).inExecCount++;
+						}
+						if (mtStmtExecURet.find())
+						{
+							//System.out.println("executeUpdate return");
+							if ( ( time - execQueryTime ) > 0 )	statements.get(statementId).inExecTime+= (time - execQueryTime);
+							statements.get(statementId).inExecCount++;
 						}
 						if (mtClosed.find())
 						{
@@ -144,11 +159,17 @@ public class TraceParser {
 						String resultSetId = mtResultSet.group(1);
 						//System.out.println("ResultSet found id = "+resultSetId);
 						mtClosed = ptClosed.matcher(line);
+						mtFinalized = ptFinalized.matcher(line);
 						if (mtClosed.find())
 						{
 							//System.out.println("ResultSet closed id = "+resultSetId);
 							resultSets.get(resultSetId).closeTime = time;
 						}
+						if (mtFinalized.find())
+						{
+							//System.out.println("Statement closed id = "+statementId);
+							resultSets.get(resultSetId).finalyzeTime = time;
+						}						
 					}
 
 				}

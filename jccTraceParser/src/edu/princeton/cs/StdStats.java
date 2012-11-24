@@ -63,6 +63,18 @@ public final class StdStats {
         return max;
     }
 
+    /**
+     * Return maximum value in subarray a[]
+     */
+   public static long max(Long[] a) 
+   {
+       long max = Long.MIN_VALUE;
+       for (int i = 0; i < a.length; i++) {
+           if (a[i] > max) max = a[i];
+       }
+       return max;
+   }
+
    /**
      * Return maximum value of array, Integer.MIN_VALUE if no such value
      */
@@ -108,6 +120,16 @@ public final class StdStats {
         }
         return min;
     }
+    /**
+     * Return minimum value of array, Integer.MAX_VALUE if no such value
+     */
+    public static long min(Long[] a) {
+        long min = Integer.MAX_VALUE;
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] < min) min = a[i];
+        }
+        return min;
+    }
 
    /**
      * Return average value in array, NaN if no such value.
@@ -134,6 +156,18 @@ public final class StdStats {
      * Return average value in array, NaN if no such value.
      */
     public static double mean(int[] a) {
+        if (a.length == 0) return Double.NaN;
+        double sum = 0.0;
+        for (int i = 0; i < a.length; i++) {
+            sum = sum + a[i];
+        }
+        return sum / a.length;
+    }
+
+    /**
+     * Return average value in array, NaN if no such value.
+     */
+    public static double mean(Long[] a) {
         if (a.length == 0) return Double.NaN;
         double sum = 0.0;
         for (int i = 0; i < a.length; i++) {
@@ -278,6 +312,16 @@ public final class StdStats {
      */
     public static int sum(int[] a) {
         int sum = 0;
+        for (int i = 0; i < a.length; i++) {
+            sum += a[i];
+        }
+        return sum;
+    }
+    /**
+     * Return sum of all values in array.
+     */
+    public static long sum(Long[] a) {
+        long sum = 0;
         for (int i = 0; i < a.length; i++) {
             sum += a[i];
         }

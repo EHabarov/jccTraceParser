@@ -12,6 +12,8 @@ public class Statement extends TraceObject
 	public long createTime;
 	public long closeTime;
 	public long finalyzeTime;
+	public long inExecTime;
+	public int inExecCount;
 	private ArrayList<String> resultSetIds = new ArrayList<String>();
 	
 	public Statement(long queryTime, long createTime, String threadId, String connectionId, String id, String sql)
@@ -41,25 +43,39 @@ public class Statement extends TraceObject
 		result.append(connectionId);
 		result.append(" S:");
 		result.append(id);
+		result.append(" Ec:");
+		result.append(inExecCount);
+		result.append(" E(ms):");
+		result.append(inExecTime);
 		result.append(" RS:");
 		result.append(resultSetIds.size());
-		if (queryTime > 0 && closeTime > 0)
-		{
-			result.append(" TTL(ms):");
-			result.append(closeTime - queryTime);
-		}
-		if (closeTime > 0 && finalyzeTime > 0)
-		{
-			result.append(" FIN(ms):");
-			result.append(finalyzeTime - closeTime);
-		}
-		if (queryTime > 0 && createTime > 0)
-		{
-			result.append(" PREP(ms):");
-			result.append(createTime - queryTime);
-		}
+		result.append(" TTL(ms):");
+		result.append(getLiveTime());
+//		result.append(" FIN(ms):");
+//		result.append(finalyzeTime - closeTime);
+		result.append(" PREP(ms):");
+		result.append(getPrepareTime());
 		result.append(" SQL:");
 		result.append(sql);
 		return result.toString();
+	}
+	public long getPrepareTime()
+	{
+		if (queryTime > 0 && closeTime > 0) return (createTime - queryTime);
+		else return (-1);
+	}
+	public long getLiveTime()
+	{
+		if (queryTime > 0 && closeTime > 0) return (closeTime - queryTime);
+		else return (-1);
+	}
+	public long getTotalTime()
+	{
+		if (closeTime > 0 && finalyzeTime > 0) return (finalyzeTime - closeTime);
+		else return (-1);
+	}
+	public int getResultSetCount()
+	{
+		return resultSetIds.size();
 	}
 }
